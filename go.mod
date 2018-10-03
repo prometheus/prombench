@@ -27,6 +27,7 @@ require (
 	github.com/howeyc/gopass v0.0.0-20170109162249-bf9dde6d0d2c
 	github.com/imdario/mergo v0.3.5
 	github.com/json-iterator/go v0.0.0-20180701071628-ab8a2e0c74be
+	github.com/jszwedko/go-circleci v0.2.0
 	github.com/juju/ratelimit v0.0.0-20171026090426-59fac5042749
 	github.com/mailru/easyjson v0.0.0-20180606163543-3fdea8d05856
 	github.com/mattn/go-colorable v0.0.0-20170221004137-d898aa9fb31c

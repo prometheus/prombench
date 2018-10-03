@@ -1,4 +1,4 @@
-# Automated Prometheus E2E testing and benchmarking.
+# Automated Prometheus E2E testing and benchmarking
 
 ![Prombench Design](design.svg)
 
@@ -12,17 +12,18 @@ A Prometheus maintainer can comment as follows to benchmark a PR:
 
 To cancel benchmarking, a mantainer should comment `/benchmark cancel`.
 
-## Prerequisites 
+## Prerequisites
 - Create a new Google cloud project - `prometheus-ci`
 - Create a [Service Account](https://cloud.google.com/kubernetes-engine/docs/tutorials/authenticating-to-cloud-platform#step_3_create_service_account_credentials) on GKE with role `Kubernetes Engine Service Agent & Kubernetes Engine Admin` and download the json file.
-- Generate a github auth token that will be used to authenticate when sending requests to the github api.
-  * Login with the [Prombot account](https://github.com/prombot) and generate a [new auth token](https://github.com/settings/tokens).  
+- Generate a GitHub auth token that will be used to authenticate when sending requests to the GitHub API.
+  * Login with the [Prombot account](https://github.com/prombot) and generate a [new auth token](https://github.com/settings/tokens).
   permissions:*public_repo, read:org, write:discussion*.
+- Generate a [CircleCI project token](https://circleci.com/gh/prometheus/prometheus/edit#api) for the Prometheus project with the `All` scope. This token grants read access to all the build information.
 
 - Set some env variable which will be used in the commands below.
   * **Note:** The `#GCLOUD_SERVICEACCOUNT_CLIENTID` is used to grant `cluster-admin-rights` to the `service-account` which needs to create RBAC roles. The `service-account` is used by the `prombench` tool when managing the cluster for each job.
 ```
-export PROJECT_ID=prometheus-ci 
+export PROJECT_ID=prometheus-ci
 export CLUSTER_NAME=prow
 export ZONE=europe-west3-a
 export AUTH_FILE=<path to service-account.json>
@@ -30,12 +31,13 @@ export GITHUB_ORG=prometheus
 export GITHUB_REPO=prometheus
 export GRAFANA_ADMIN_PASSWORD=$(openssl rand -hex 20)
 export HMAC_TOKEN=$(openssl rand -hex 20)
-export OAUTH_TOKEN=***Replace with the generated token from github***
+export OAUTH_TOKEN=***Replace with the generated token from GitHub***
+export CIRCLECI_TOKEN=***Replace with the project token from CircleCI***
 export GCLOUD_SERVICEACCOUNT_CLIENTID=<client_id from the service-account.json>
 ```
-  
 
-- Add a [github webhook](https://github.com/prometheus/prometheus/settings/hooks) where to send the events.
+
+- Add a [GitHub webhook](https://github.com/prometheus/prometheus/settings/hooks) where to send the events.
   * Content Type: `json`
   * Send:  `Issue comments,Pull requests`
   * Secret: `echo $HMAC_TOKEN`
@@ -43,7 +45,7 @@ export GCLOUD_SERVICEACCOUNT_CLIENTID=<client_id from the service-account.json>
 
     * **Note:** The ip DNS record for `prombench.prometheus.io` will be added once we get it from the ingress deployment in the following steps.
 
-## Prow Setup.
+## Prow Setup
 
 - Create the main k8s cluster to deploy the Prow components.
 
@@ -52,16 +54,18 @@ export GCLOUD_SERVICEACCOUNT_CLIENTID=<client_id from the service-account.json>
 -v ZONE:$ZONE -v CLUSTER_NAME:$CLUSTER_NAME -f components/prow/cluster.yaml
 ```
 - Add all required tokens as k8s secrets.
-  * hmac is used when verifying requests from github.
-  * oauth is used when sending requests to the github api.
+  * hmac is used when verifying requests from GitHub.
+  * oauth is used when sending requests to the GitHub API.
   * gke auth is used when scaling up and down the cluster.
+  * circleci token is used to download artifacts from CircleCI.
+
 ```
 ./prombench gke resource apply -a $AUTH_FILE -v ZONE:$ZONE -v CLUSTER_NAME:$CLUSTER_NAME \
 -f components/prow/manifests/secrets.yaml \
 -v HMAC_TOKEN="$(printf $HMAC_TOKEN | base64 -w 0)" \
 -v OAUTH_TOKEN="$(printf $OAUTH_TOKEN | base64 -w 0)" \
 -v GKE_AUTH="$(cat $AUTH_FILE | base64 -w 0)"
-
+-v CIRCLECI_TOKEN="$(printf $CIRCLECI_TOKEN | base64 -w 0)"
 ```
 
 - Deploy the [nginx-ingress-controller](https://github.com/kubernetes/ingress-nginx) which will be used to access all public components.

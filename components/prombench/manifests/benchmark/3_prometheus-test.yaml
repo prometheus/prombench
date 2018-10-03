@@ -735,7 +735,7 @@ spec:
         runAsUser: 0
       containers:
       - name: prometheus
-        image: docker.io/prombench/prometheus-builder:2.0.0
+        image: docker.io/prombench/promrunner:2.0.0
         imagePullPolicy: Always
         # The prometheus-builder takes a while to build and run
         # so make sure we start it before the release deployment.
@@ -747,12 +747,17 @@ spec:
           initialDelaySeconds: 30
           periodSeconds: 2
           failureThreshold: 30
-        args: ["{{ .PR_NUMBER }}"]
+        args:
+        - --token.circleci
+        - /etc/circleci/token
+        - "{{ .PR_NUMBER }}"
         volumeMounts:
         - name: config-volume
           mountPath: /etc/prometheus/config
         - name: instance-ssd
           mountPath: /data
+        - name: circleci
+          mountPath: /etc/circleci
         ports:
         - name: prom-web
           containerPort: 9090
@@ -765,6 +770,9 @@ spec:
           # /mnt is where GKE keeps it's SSD
           # don't change this if you want Prometheus to take advantage of these local SSDs
           path: /mnt/disks/ssd0
+      - name: circleci
+        secret:
+          secretName: circleci
       terminationGracePeriodSeconds: 300
       nodeSelector:
         cloud.google.com/gke-nodepool: prometheus-{{ .PR_NUMBER }}
