@@ -42,6 +42,18 @@ nodepool_delete:
 		-v ZONE:${ZONE} -v PROJECT_ID:${PROJECT_ID} -v CLUSTER_NAME:${CLUSTER_NAME} -v PR_NUMBER:${PR_NUMBER} \
 		-f manifests/prombench/nodepools.yaml
 
+cluster_delete: prometheusmeta_resource_delete
+	$(PROMBENCH_CMD) gke cluster delete -a ${AUTH_FILE} \
+		-v ZONE:${ZONE} -v PROJECT_ID:${PROJECT_ID} -v CLUSTER_NAME:${CLUSTER_NAME} \
+		-f manifests/cluster.yaml
+
+prometheusmeta_resource_delete:
+	$(PROMBENCH_CMD) gke resource delete -a ${AUTH_FILE} \
+		-v ZONE:${ZONE} -v PROJECT_ID:${PROJECT_ID} -v CLUSTER_NAME:${CLUSTER_NAME} \
+		-v DOMAIN_NAME:${DOMAIN_NAME} -v GRAFANA_ADMIN_PASSWORD:${GRAFANA_ADMIN_PASSWORD} \
+		-v GCLOUD_SERVICEACCOUNT_CLIENT_EMAIL:${GCLOUD_SERVICEACCOUNT_CLIENT_EMAIL} \
+		-f manifests/cluster-infra/3b_prometheus-meta.yaml
+
 build:
 	@$(DOCKER_CMD) go build ./cmd/prombench/
 
@@ -49,4 +61,4 @@ docker: build
 	@docker build -t $(DOCKER_TAG) .
 	@docker push $(DOCKER_TAG)
 
-.PHONY: deploy clean build docker
+.PHONY: deploy clean build docker prometheusmeta_resource_delete cluster_delete
