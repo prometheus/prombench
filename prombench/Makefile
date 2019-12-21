@@ -20,6 +20,7 @@ resource_apply:
 		-v ZONE:${ZONE} -v PROJECT_ID:${PROJECT_ID} -v CLUSTER_NAME:${CLUSTER_NAME} \
 		-v PR_NUMBER:${PR_NUMBER} -v RELEASE:${RELEASE} -v DOMAIN_NAME:${DOMAIN_NAME} \
 		-v GITHUB_ORG:${GITHUB_ORG} -v GITHUB_REPO:${GITHUB_REPO} \
+		-v LAST_COMMIT_SHA:${LAST_COMMIT_SHA} \
 		-f manifests/prombench/benchmark
 
 # NOTE: required because namespace and cluster-role are not part of the created nodepools

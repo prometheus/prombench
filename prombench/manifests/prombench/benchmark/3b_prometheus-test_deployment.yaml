@@ -34,7 +34,7 @@ spec:
         runAsUser: 0
       initContainers:
       - name: prometheus-builder
-        image: docker.io/prombench/prometheus-builder:2.0.2
+        image: docker.io/prombench/prometheus-builder:2.0.3
         env:
         - name: PR_NUMBER
           value: "{{ .PR_NUMBER }}"
@@ -44,6 +44,8 @@ spec:
           value: "{{ .GITHUB_ORG }}"
         - name: GITHUB_REPO
           value: "{{ .GITHUB_REPO }}"
+        - name: LAST_COMMIT_SHA
+          value: "{{ .LAST_COMMIT_SHA }}"
         volumeMounts:
         - name: prometheus-executable
           mountPath: /prometheus-builder
