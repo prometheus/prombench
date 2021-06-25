@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -53,6 +54,7 @@ func (l *logger) FatalError(err error) {
 
 func main() {
 	cfg := struct {
+		userTestName   string
 		verbose        bool
 		nocomment      bool
 		owner          string
@@ -65,6 +67,7 @@ func main() {
 		compareTarget  string
 		benchFuncRegex string
 		packagePath    string
+		enablePerflock bool
 	}{}
 
 	app := kingpin.New(
@@ -94,8 +97,12 @@ func main() {
 		Default("/tmp/funcbench").
 		StringVar(&cfg.workspaceDir)
 	app.Flag("result-cache", "Directory to store benchmark results.").
-		Default("_dev/funcbench").
+		Default("funcbench-results").
 		StringVar(&cfg.resultsDir)
+	app.Flag("user-test-name", "Name of the test to keep track of multiple benchmarks").
+		Default("default").
+		Short('n').
+		StringVar(&cfg.userTestName)
 
 	app.Flag("bench-time", "Run enough iterations of each benchmark to take t, specified "+
 		"as a time.Duration. The special syntax Nx means to run the benchmark N times").
@@ -103,6 +110,10 @@ func main() {
 	app.Flag("timeout", "Benchmark timeout specified in time.Duration format, "+
 		"disabled if set to 0. If a test binary runs longer than duration d, panic.").
 		Short('d').Default("2h").DurationVar(&cfg.benchTimeout)
+	app.Flag("perflock", "Enable perflock (you must have perflock installed to use this)").
+		Short('l').
+		Default("false").
+		BoolVar(&cfg.enablePerflock)
 
 	app.Arg("target", "Can be one of '.', tag name, branch name or commit SHA of the branch "+
 		"to compare against. If set to '.', branch/commit is the same as the current one; "+
@@ -165,8 +176,10 @@ func main() {
 			// ( ◔_◔)ﾉ Start benchmarking!
 			benchmarker := newBenchmarker(logger, env,
 				&commander{verbose: cfg.verbose, ctx: ctx},
-				cfg.benchTime, cfg.benchTimeout, cfg.resultsDir,
+				cfg.benchTime, cfg.benchTimeout,
+				path.Join(cfg.resultsDir, cfg.userTestName),
 				cfg.packagePath,
+				cfg.enablePerflock,
 			)
 			tables, err := startBenchmark(env, benchmarker)
 			if err != nil {
@@ -220,7 +233,7 @@ func main() {
 func startBenchmark(env Environment, bench *Benchmarker) ([]*benchstat.Table, error) {
 
 	wt, _ := env.Repo().Worktree()
-	cmpWorkTreeDir := filepath.Join(wt.Filesystem.Root(), "_funcbench-cmp")
+	cmpWorkTreeDir := filepath.Join(bench.scratchWorkspaceDir)
 
 	ref, err := env.Repo().Head()
 	if err != nil {

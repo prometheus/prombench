@@ -32,15 +32,19 @@ import (
 type Benchmarker struct {
 	logger Logger
 
-	benchmarkArgs  []string
-	benchFunc      string
-	resultCacheDir string
+	benchmarkArgs       []string
+	benchFunc           string
+	resultCacheDir      string
+	scratchWorkspaceDir string
+	enablePerflock      bool
 
 	c    *commander
 	repo *git.Repository
 }
 
-func newBenchmarker(logger Logger, env Environment, c *commander, benchTime time.Duration, benchTimeout time.Duration, resultCacheDir, packagePath string) *Benchmarker {
+func newBenchmarker(logger Logger, env Environment, c *commander,
+	benchTime, benchTimeout time.Duration,
+	resultCacheDir, packagePath string, enablePerflock bool) *Benchmarker {
 	return &Benchmarker{
 		logger:    logger,
 		benchFunc: env.BenchFunc(),
@@ -56,9 +60,11 @@ func newBenchmarker(logger Logger, env Environment, c *commander, benchTime time
 			"-timeout", benchTimeout.String(),
 			packagePath,
 		},
-		c:              c,
-		repo:           env.Repo(),
-		resultCacheDir: resultCacheDir,
+		c:                   c,
+		repo:                env.Repo(),
+		resultCacheDir:      resultCacheDir,
+		scratchWorkspaceDir: "/tmp/funcbench-scratch",
+		enablePerflock:      enablePerflock,
 	}
 }
 
@@ -91,6 +97,9 @@ func (b *Benchmarker) exec(pkgRoot string, commit plumbing.Hash) (string, error)
 	benchCmd := []string{"sh", "-c", strings.Join(append([]string{"cd", pkgRoot, "&&"}, b.benchmarkArgs...), " ")}
 
 	b.logger.Println("Executing benchmark command for", commit.String(), "\n", benchCmd)
+	if b.enablePerflock {
+		benchCmd = append([]string{"perflock"}, benchCmd...)
+	}
 	out, err := b.c.exec(benchCmd...)
 	if err != nil {
 		return "", errors.Wrap(err, "benchmark ended with an error.")

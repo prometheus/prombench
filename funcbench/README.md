@@ -36,14 +36,19 @@ Flags:
                              benchmark results.
       --workspace="/tmp/funcbench"
                              Directory to clone GitHub PR.
-      --result-cache="_dev/funcbench"
+      --result-cache="funcbench-results"
                              Directory to store benchmark results.
+  -n, --user-test-name="default"
+                             Name of the test to keep track of multiple
+                             benchmarks
   -t, --bench-time=1s        Run enough iterations of each benchmark to take t,
                              specified as a time.Duration. The special syntax Nx
                              means to run the benchmark N times
   -d, --timeout=2h           Benchmark timeout specified in time.Duration
                              format, disabled if set to 0. If a test binary runs
                              longer than duration d, panic.
+  -l, --perflock             Enable perflock (you must have perflock installed
+                             to use this)
 
 Args:
   <target>              Can be one of '.', tag name, branch name or commit SHA
