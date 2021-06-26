@@ -16,18 +16,19 @@ package kind
 import (
 	"context"
 	"fmt"
-	"strings"
-
 	"github.com/pkg/errors"
 	"github.com/prometheus/test-infra/pkg/provider"
 	k8sProvider "github.com/prometheus/test-infra/pkg/provider/k8s"
 	"gopkg.in/alecthomas/kingpin.v2"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 	"sigs.k8s.io/kind/pkg/cluster"
 	"sigs.k8s.io/kind/pkg/cmd"
+	"strings"
 )
 
 type Resource = provider.Resource
@@ -207,5 +208,45 @@ func (c *KIND) GetDeploymentVars(parseContext *kingpin.ParseContext) error {
 	for key, value := range c.DeploymentVars {
 		fmt.Println(key, ": ", value)
 	}
+	return nil
+}
+
+// Get Prombench services
+func (c *KIND) GetKINDService(*kingpin.ParseContext) error {
+
+	var (
+		InternalIP string
+		NodePort   int32
+	)
+
+	pods, err := c.k8sProvider.Clt.CoreV1().Pods("default").List(c.ctx, metav1.ListOptions{LabelSelector: "app=grafana"})
+	if k8sErrors.IsNotFound(err) || err != nil {
+		return err
+	}
+
+	for _, v := range pods.Items {
+		node, err := c.k8sProvider.Clt.CoreV1().Nodes().Get(c.ctx, v.Spec.NodeName, metav1.GetOptions{})
+		if k8sErrors.IsNotFound(err) || err != nil {
+			return err
+		}
+
+		for _, v := range node.Status.Addresses {
+			if v.Type == "InternalIP" {
+				InternalIP = v.Address
+			}
+		}
+	}
+
+	service, err := c.k8sProvider.Clt.CoreV1().Services("default").Get(c.ctx, "grafana", metav1.GetOptions{})
+	if k8sErrors.IsNotFound(err) || err != nil {
+		return err
+	}
+
+	NodePort = service.Spec.Ports[0].NodePort
+
+	fmt.Printf("Grafana: http://%v:%v/grafana\n", InternalIP, NodePort)
+	fmt.Printf("Prometheus: http://%v:%v/prometheus-meta\n", InternalIP, NodePort)
+	fmt.Printf("Logs: http://%v:%v/grafana/explore\n", InternalIP, NodePort)
+
 	return nil
 }

@@ -62,6 +62,9 @@ Commands:
 
   kind info
     kind info -v hashStable:COMMIT1 -v hashTesting:COMMIT2
+  
+  kind services
+    kind services
 
   kind cluster create
     kind cluster create -f File -v PR_NUMBER:$PR_NUMBER -v

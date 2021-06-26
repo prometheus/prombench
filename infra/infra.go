@@ -91,6 +91,10 @@ func main() {
 	k8sKIND.Command("info", "kind info -v hashStable:COMMIT1 -v hashTesting:COMMIT2").
 		Action(k.GetDeploymentVars)
 
+	k8sKIND.Command("services", "kind services").
+		Action(k.NewK8sProvider).
+		Action(k.GetKINDService)
+
 	//Cluster operations.
 	k8sKINDCluster := k8sKIND.Command("cluster", "manage KIND clusters").
 		Action(k.KINDDeploymentsParse)
