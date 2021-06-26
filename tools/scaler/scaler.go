@@ -38,14 +38,18 @@ type scale struct {
 }
 
 func newScaler() *scale {
-	k, err := k8s.New(context.Background(), nil)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "Error creating k8s client inside the k8s cluster"))
-		os.Exit(2)
-	}
 	return &scale{
-		k8sClient: k,
+		k8sClient: &k8s.K8s{},
 	}
+}
+
+func (s *scale) setupScaler(*kingpin.ParseContext) error {
+	var err error
+	s.k8sClient, err = k8s.New(context.Background(), nil)
+	if err != nil {
+		return errors.Wrapf(err, "Error creating k8s client inside the k8s cluster")
+	}
+	return nil
 }
 
 func (s *scale) updateReplicas(replicas *int32) []k8s.Resource {
@@ -98,6 +102,7 @@ func main() {
 	s := newScaler()
 
 	k8sApp := app.Command("scale", "Scale a Kubernetes deployment object periodically up and down. \nex: ./scaler scale -v NAMESPACE:scale -f fake-webserver.yaml 20 1 15m").
+		Action(s.setupScaler).
 		Action(s.k8sClient.DeploymentsParse).
 		Action(s.scale)
 	k8sApp.Flag("file", "yaml file or folder that describes the parameters for the deployment.").
@@ -117,9 +122,5 @@ func main() {
 		Required().
 		DurationVar(&s.interval)
 
-	if _, err := app.Parse(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "Error parsing commandline arguments"))
-		app.Usage(os.Args[1:])
-		os.Exit(2)
-	}
+	kingpin.MustParse(app.Parse(os.Args[1:]))
 }
