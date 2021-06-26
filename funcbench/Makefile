@@ -15,14 +15,12 @@ cluster_create:
 	$(INFRA_CMD) $(PROVIDER) cluster create -a ${AUTH_FILE} \
 		-v GKE_PROJECT_ID:${GKE_PROJECT_ID} -v ZONE:${ZONE} -v CLUSTER_NAME:funcbench-${PR_NUMBER} -v PR_NUMBER:${PR_NUMBER} \
 		-v EKS_WORKER_ROLE_ARN:${EKS_WORKER_ROLE_ARN} -v EKS_CLUSTER_ROLE_ARN:${EKS_CLUSTER_ROLE_ARN} \
-		-v EKS_SUBNET_IDS:${EKS_SUBNET_IDS} \
 		-f manifests/cluster_$(PROVIDER).yaml
 
 cluster_delete:
 	$(INFRA_CMD) $(PROVIDER) cluster delete -a ${AUTH_FILE} \
 		-v GKE_PROJECT_ID:${GKE_PROJECT_ID} -v ZONE:${ZONE} -v CLUSTER_NAME:funcbench-${PR_NUMBER} -v PR_NUMBER:${PR_NUMBER} \
 		-v EKS_WORKER_ROLE_ARN:${EKS_WORKER_ROLE_ARN} -v EKS_CLUSTER_ROLE_ARN:${EKS_CLUSTER_ROLE_ARN} \
-		-v EKS_SUBNET_IDS:${EKS_SUBNET_IDS} \
 		-f manifests/cluster_$(PROVIDER).yaml
 
 resource_apply:

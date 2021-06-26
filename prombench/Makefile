@@ -1,4 +1,5 @@
 INFRA_CMD        ?= ../infra/infra
+PROVIDER 		 ?= gke
 
 PROVIDER 		 ?= gke
 
@@ -12,7 +13,6 @@ node_create:
 	${INFRA_CMD} ${PROVIDER} nodes create -a ${AUTH_FILE} \
 		-v ZONE:${ZONE} -v GKE_PROJECT_ID:${GKE_PROJECT_ID} \
 		-v EKS_WORKER_ROLE_ARN:${EKS_WORKER_ROLE_ARN} -v EKS_CLUSTER_ROLE_ARN:${EKS_CLUSTER_ROLE_ARN} \
-		-v EKS_SUBNET_IDS:${EKS_SUBNET_IDS} \
 		-v CLUSTER_NAME:${CLUSTER_NAME} -v PR_NUMBER:${PR_NUMBER} \
 		-f manifests/prombench/nodes_${PROVIDER}.yaml
 
@@ -36,7 +36,6 @@ node_delete:
 	$(INFRA_CMD) ${PROVIDER} nodes delete -a ${AUTH_FILE} \
 		-v ZONE:${ZONE} -v GKE_PROJECT_ID:${GKE_PROJECT_ID} \
 		-v EKS_WORKER_ROLE_ARN:${EKS_WORKER_ROLE_ARN} -v EKS_CLUSTER_ROLE_ARN:${EKS_CLUSTER_ROLE_ARN} \
-		-v EKS_SUBNET_IDS:${EKS_SUBNET_IDS} \
 		-v CLUSTER_NAME:${CLUSTER_NAME} -v PR_NUMBER:${PR_NUMBER} \
 		-f manifests/prombench/nodes_${PROVIDER}.yaml
 
@@ -44,7 +43,6 @@ all_nodes_running:
 	$(INFRA_CMD) ${PROVIDER} nodes check-running -a ${AUTH_FILE} \
 		-v ZONE:${ZONE} -v GKE_PROJECT_ID:${GKE_PROJECT_ID} \
 		-v EKS_WORKER_ROLE_ARN:${EKS_WORKER_ROLE_ARN} -v EKS_CLUSTER_ROLE_ARN:${EKS_CLUSTER_ROLE_ARN} \
-		-v EKS_SUBNET_IDS:${EKS_SUBNET_IDS} -v SEPARATOR:${SEPARATOR} \
 		-v CLUSTER_NAME:${CLUSTER_NAME} -v PR_NUMBER:${PR_NUMBER} \
 		-f manifests/prombench/nodes_${PROVIDER}.yaml	
 
@@ -52,6 +50,5 @@ all_nodes_deleted:
 	$(INFRA_CMD) ${PROVIDER} nodes check-deleted -a ${AUTH_FILE} \
 		-v ZONE:${ZONE} -v GKE_PROJECT_ID:${GKE_PROJECT_ID} \
 		-v EKS_WORKER_ROLE_ARN:${EKS_WORKER_ROLE_ARN} -v EKS_CLUSTER_ROLE_ARN:${EKS_CLUSTER_ROLE_ARN} \
-		-v EKS_SUBNET_IDS:${EKS_SUBNET_IDS} -v SEPARATOR:${SEPARATOR} \
 		-v CLUSTER_NAME:${CLUSTER_NAME} -v PR_NUMBER:${PR_NUMBER} \
 		-f manifests/prombench/nodes_${PROVIDER}.yaml

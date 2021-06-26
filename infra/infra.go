@@ -113,7 +113,7 @@ func main() {
 	k8sEKS := app.Command("eks", "Amazon Elastic Kubernetes Service - https://aws.amazon.com/eks").
 		Action(e.SetupDeploymentResources)
 	k8sEKS.Flag("auth", "filename which consist eks credentials.").
-		PlaceHolder("credentials").
+		PlaceHolder("authFile").
 		Short('a').
 		StringVar(&e.Auth)
 
@@ -124,22 +124,22 @@ func main() {
 	k8sEKSCluster := k8sEKS.Command("cluster", "manage EKS clusters").
 		Action(e.NewEKSClient).
 		Action(e.EKSDeploymentParse)
-	k8sEKSCluster.Command("create", "eks cluster create -a credentials -f FileOrFolder").
+	k8sEKSCluster.Command("create", "eks cluster create -a authFile -f FileOrFolder").
 		Action(e.ClusterCreate)
-	k8sEKSCluster.Command("delete", "eks cluster delete -a credentials -f FileOrFolder").
+	k8sEKSCluster.Command("delete", "eks cluster delete -a authFile -f FileOrFolder").
 		Action(e.ClusterDelete)
 
 	// Cluster node-pool operations
 	k8sEKSNodeGroup := k8sEKS.Command("nodes", "manage EKS clusters nodegroups").
 		Action(e.NewEKSClient).
 		Action(e.EKSDeploymentParse)
-	k8sEKSNodeGroup.Command("create", "eks nodes create -a authFile -f FileOrFolder -v ZONE:eu-west-1 -v CLUSTER_NAME:test -v EKS_SUBNET_IDS: subnetId1,subnetId2,subnetId3").
+	k8sEKSNodeGroup.Command("create", "eks nodes create -a authFile -f FileOrFolder -v ZONE:eu-west-1 -v CLUSTER_NAME:test").
 		Action(e.NodeGroupCreate)
-	k8sEKSNodeGroup.Command("delete", "eks nodes delete -a authFile -f FileOrFolder -v ZONE:eu-west-1 -v CLUSTER_NAME:test -v EKS_SUBNET_IDS: subnetId1,subnetId2,subnetId3").
+	k8sEKSNodeGroup.Command("delete", "eks nodes delete -a authFile -f FileOrFolder -v ZONE:eu-west-1 -v CLUSTER_NAME:test").
 		Action(e.NodeGroupDelete)
-	k8sEKSNodeGroup.Command("check-running", "eks nodes check-running -a credentails -f FileOrFolder -v ZONE:eu-west-1 -v CLUSTER_NAME:test -v EKS_SUBNET_IDS: subnetId1,subnetId2,subnetId3").
+	k8sEKSNodeGroup.Command("check-running", "eks nodes check-running -a credentails -f FileOrFolder -v ZONE:eu-west-1 -v CLUSTER_NAME:test").
 		Action(e.AllNodeGroupsRunning)
-	k8sEKSNodeGroup.Command("check-deleted", "eks nodes check-deleted -a authFile -f FileOrFolder -v ZONE:eu-west-1 -v CLUSTER_NAME:test -v EKS_SUBNET_IDS: subnetId1,subnetId2,subnetId3").
+	k8sEKSNodeGroup.Command("check-deleted", "eks nodes check-deleted -a authFile -f FileOrFolder -v ZONE:eu-west-1 -v CLUSTER_NAME:test").
 		Action(e.AllNodeGroupsDeleted)
 
 	// K8s resource operations.
@@ -149,7 +149,7 @@ func main() {
 		Action(e.NewK8sProvider)
 	k8sEKSResource.Command("apply", "eks resource apply -a credentials -f manifestsFileOrFolder -v hashStable:COMMIT1 -v hashTesting:COMMIT2").
 		Action(e.ResourceApply)
-	k8sEKSResource.Command("delete", "eks resource delete -a credentials -f manifestsFileOrFolder -v hashStable:COMMIT1 -v hashTesting:COMMIT2").
+	k8sEKSResource.Command("delete", "eks resource delete -a authFile -f manifestsFileOrFolder -v hashStable:COMMIT1 -v hashTesting:COMMIT2").
 		Action(e.ResourceDelete)
 
 	if _, err := app.Parse(os.Args[1:]); err != nil {

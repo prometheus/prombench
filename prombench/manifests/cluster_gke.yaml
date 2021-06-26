@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 projectid: {{ .GKE_PROJECT_ID }}
+=======
+projectid: {{ .PROJECT_ID }}
+>>>>>>> Chnage as per review
 zone: {{ .ZONE }}
 cluster:
   name: {{ .CLUSTER_NAME }}

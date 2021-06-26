@@ -32,11 +32,9 @@ export EKS_CLUSTER_ROLE_ARN=<Amazon EKS cluster role ARN>
 # By default SEPARATOR DeploymentVar is set to `,` but you can override it by exporting and
 # then passing it with the -v flag. It is used to split DeploymentVar into a slice.
 export SEPARATOR=, 
-export EKS_SUBNET_IDS=SUBNETID1,SUBNETID2,SUBNETID3
 
 ../infra/infra eks cluster create -a $AUTH_FILE -v ZONE:$ZONE \
     -v EKS_WORKER_ROLE_ARN:$EKS_WORKER_ROLE_ARN -v EKS_CLUSTER_ROLE_ARN:$EKS_CLUSTER_ROLE_ARN \
-    -v EKS_SUBNET_IDS:$EKS_SUBNET_IDS \
     -v CLUSTER_NAME:$CLUSTER_NAME \
     -f manifests/cluster_eks.yaml
 ```
@@ -97,7 +95,6 @@ export PR_NUMBER=<PR to benchmark against the selected $RELEASE>
 ```shell
 ../infra/infra eks nodes create -a $AUTH_FILE \
     -v ZONE:$ZONE -v EKS_WORKER_ROLE_ARN:$EKS_WORKER_ROLE_ARN -v EKS_CLUSTER_ROLE_ARN:$EKS_CLUSTER_ROLE_ARN \
-    -v EKS_SUBNET_IDS:$EKS_SUBNET_IDS \
     -v CLUSTER_NAME:$CLUSTER_NAME \
     -v PR_NUMBER:$PR_NUMBER -f manifests/prombench/nodes_eks.yaml
 ```
