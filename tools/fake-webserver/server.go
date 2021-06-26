@@ -23,6 +23,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+type server struct {
+	startTime time.Time
+}
+
 var (
 	registry = prometheus.NewRegistry()
 
@@ -138,7 +142,7 @@ var opts = map[string]map[string]responseOpts{
 	},
 }
 
-func handleAPI(method, path string) {
+func (s server) handleAPI(method, path string) {
 	requestsInProgress.Inc()
 	status := http.StatusOK
 	duration := time.Millisecond
@@ -165,7 +169,7 @@ func handleAPI(method, path string) {
 	}
 	latencyFactor := time.Duration(1)
 	errorFactor := 1.
-	if time.Since(start)%(10*methodOpts.outageDuration) < methodOpts.outageDuration {
+	if time.Since(s.startTime)%(10*methodOpts.outageDuration) < methodOpts.outageDuration {
 		latencyFactor *= 3
 		errorFactor *= 10
 	}

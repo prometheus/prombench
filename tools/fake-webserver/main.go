@@ -14,49 +14,55 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/pprof"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-)
-
-var (
-	n = flag.Int(
-		"port-count", 5,
-		"Number of sequential ports to serve metrics on, starting at 8080.",
-	)
-	registerProcessMetrics = flag.Bool(
-		"enable-process-metrics", true,
-		"Include (potentially expensive) process_* metrics.",
-	)
-	registerGoMetrics = flag.Bool(
-		"enable-go-metrics", true,
-		"Include (potentially expensive) go_* metrics.",
-	)
-	allowCompression = flag.Bool(
-		"allow-metrics-compression", true,
-		"Allow gzip compression of metrics.",
-	)
-
-	start = time.Now()
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 func main() {
-	flag.Parse()
 
-	if *registerProcessMetrics {
+	cfg := struct {
+		portCount                int
+		disableProcessMetrics    bool
+		disableGoMetrics         bool
+		disableMetricCompression bool
+		oscillationPeriod        time.Duration
+	}{}
+
+	app := kingpin.New(filepath.Base(os.Args[0]), "fake-webserver generates metrics for prometheus")
+	app.HelpFlag.Short('h')
+
+	app.Flag("port-count", "Number of sequential ports to serve metrics on, starting at 8080").
+		Default("5").
+		IntVar(&cfg.portCount)
+	app.Flag("oscillation-period", "The duration of the rate oscillation period").
+		Default("5m").
+		DurationVar(&cfg.oscillationPeriod)
+	app.Flag("disable-process-metrics", "Include (potentially expensive) process_* metrics.").
+		BoolVar(&cfg.disableProcessMetrics)
+	app.Flag("disable-go-metrics", "Include (potentially expensive) go_* metrics.").
+		BoolVar(&cfg.disableGoMetrics)
+	app.Flag("disable-metrics-compression", "Allow gzip compression of metrics.").
+		BoolVar(&cfg.disableMetricCompression)
+
+	kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	if !cfg.disableProcessMetrics {
 		registry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
 	}
-	if *registerGoMetrics {
+	if !cfg.disableGoMetrics {
 		registry.MustRegister(prometheus.NewGoCollector())
 	}
 
-	for i := 0; i < *n; i++ {
+	for i := 0; i < cfg.portCount; i++ {
 		mux := http.NewServeMux()
 		mux.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
 		mux.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
@@ -66,13 +72,16 @@ func main() {
 		mux.Handle("/metrics", promhttp.HandlerFor(
 			registry,
 			promhttp.HandlerOpts{
-				DisableCompression: !*allowCompression,
+				DisableCompression: cfg.disableMetricCompression,
 			},
 		))
 		go func(i int) {
 			log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", 8080+i), mux))
 		}(i)
 	}
-
-	runClient()
+	c := client{
+		oscillationPeriod: cfg.oscillationPeriod,
+		startTime:         time.Now(),
+	}
+	c.run()
 }
